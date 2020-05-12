@@ -1,0 +1,106 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+	<meta charset="UTF-8" />
+
+		<script src="lib/croquet.min.js"></script>
+
+	<meta name=viewport content="width=device-width, initial-scale=1">
+
+	<title>MultiplayerTest2</title>
+	<script src="lib/phaser.js"></script>
+	<script src="main.js"></script>
+	<script>
+
+	class MirrorModel extends Croquet.Model {
+		init() {
+
+			this.subscribe('game',"darEmitiendoMensaje",this.emitirMensaje);
+		}
+
+
+		emitirMensaje(mensaje){
+
+			var numeroRandom = Math.ceil(this.random()*10);
+
+			var fraseCompleta = mensaje + ' ' + 'numero ' + numeroRandom;
+
+			this.publish('game',"emitirMensaje", fraseCompleta );
+
+		}
+	}
+
+
+	MirrorModel.register();
+
+	class ClientViews extends Croquet.View {
+		constructor(model) {
+			super(model);
+			this.model =  model;
+
+			this.subscribe('game',"emitirMensaje",this.escribirMensaje)
+			this.game = null;
+					this.crearJuego(this); //me paso croquet
+		}
+
+		crearJuego(croquetView){ //recibo croquet
+
+			this.game = new Phaser.Game({
+			    "title": "MultiplayerTest2",
+			    "width": 800,
+			    "height": 450,
+					"physics": {
+						 default: 'arcade',
+						 arcade: {
+								 gravity: { y: 0 },
+								 debug: false
+						 }
+				 },
+			    "type": Phaser.AUTO,
+			    "backgroundColor": "#88F",
+			    "parent": "game-container",
+			    "scale": {
+			        "mode": Phaser.Scale.FIT,
+			        "autoCenter": Phaser.Scale.CENTER_BOTH
+			    }
+				});
+
+				this.game.croquetView = croquetView; //envio croquet a phaser
+				this.game.scene.add("Boot", Boot, true);
+
+
+		}
+
+
+		darEmitiendoMensaje(mensaje){
+
+			this.publish('game',"darEmitiendoMensaje",mensaje)
+		}
+
+		escribirMensaje(mensaje){
+
+			this.game.scene.keys.Scene1.printMessage(mensaje);
+		}
+	}
+
+
+	Croquet.startSession('Player',MirrorModel,ClientViews);
+
+
+	</script>
+
+	<style>
+		body {
+			background: black;
+			margin: 0;
+			padding: 0;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="game-container">
+	</div>
+</body>
+</html>
